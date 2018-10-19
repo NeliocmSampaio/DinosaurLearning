@@ -18,10 +18,14 @@ def down():
     pyautogui.keyDown('down')
     pyautogui.keyUp('down')
 
-def execute( file_name):
+'''
+    Execute the game with a model saved in a file.
+    restartButton is the coordinates of the restart button.
+'''
+def execute( file_name, restartButton=(528,410)):
     genome = Network(file_n=file_name)
 
-    pyautogui.click(528,410)
+    pyautogui.click(restartButton)
     vision = Vision()
     vision.find_game()
 
@@ -33,14 +37,14 @@ def execute( file_name):
             obs = vision.find_next_obstacle()
             inputs = [obs['distance']/1000, obs['lenght']/70000, obs['height']/1000, obs['speed']/15]
             outputs = genome.forward(np.array(inputs, dtype=float))
-            #print("i: ", inputs)
-            #print("o:", outputs)
             if outputs[0] > 0.55:
-                #pass
                 jump()
         except Exception as e:
             break
 
+'''
+    Genetic Algorithm definition.
+'''
 class Generation:
     def __init__(self):
         self.__genomes = [ Network() for i in range(12) ]
@@ -50,9 +54,12 @@ class Generation:
         self.count = 0
         random.seed( datetime.datetime.now())
 
-    def execute( self ):
+    '''
+        Execute the Learning process.
+    '''
+    def execute( self, restartButton=(528,410) ):
         print("executing!")
-        pyautogui.click(528,410)
+        pyautogui.click(restartButton)
         vision = Vision()
         vision.find_game()
         print(len(self.__genomes))
@@ -69,13 +76,11 @@ class Generation:
                 try:
                     obs = vision.find_next_obstacle()
                     inputs = [obs['distance']/1000, obs['lenght']/70000, obs['height']/1000, obs['speed']/10]
-                    #print(inputs)
                     outputs = genome.forward(np.array(inputs, dtype=float))
                     if outputs[0] > 0.55:
                         jump()
                         dec-=1
                 except Exception as e:
-                    #print(e)
                     break
             genome.fitness = vision.get_fitness()
             print(", fitness: "+str(genome.fitness))
@@ -87,6 +92,9 @@ class Generation:
         self.__best_genomes = self.__genomes[:]
         self.save(self.__best_genomes[0])
 
+    '''
+        Save model in a file. file name: "best<model_fitness>.bcp"
+    '''
     def save(self, gene):
         f = open(self.fileName+str(gene.fitness)+".bcp", 'w')
         f.write(str(gene.input_size)+" "+str(gene.hidden_size)+" "+str(gene.output_size))
@@ -106,11 +114,11 @@ class Generation:
 
         f.close()
 
+    '''
+        Mutation operation.
+    '''
     def mutations(self):
         print("mutating!")
-        #self.__genomes.append(self.__best_genomes[0])
-        #while len(self.__genomes)<5:
-        #    self.__genomes.append( Network() )
         while len(self.__genomes)<10:
             genome1 = random.choice(self.__best_genomes)
             genome2 = random.choice(self.__best_genomes)
@@ -119,6 +127,9 @@ class Generation:
             genome = random.choice(self.__best_genomes)
             self.__genomes.append(self.mutate(genome))
 
+    '''
+        Cross Over operation.
+    '''
     def cross_over(self, genome1, genome2):
         new_genome = copy.deepcopy(genome1)
         other_genome = copy.deepcopy(genome2)
@@ -130,6 +141,9 @@ class Generation:
             new_genome.W2[i], other_genome.W2[i] = other_genome.W2[i], new_genome.W2[i]
         return new_genome
 
+    '''
+        Individual mutation.
+    '''
     def __mutate_weights(self, weights):
         if random.uniform(0,1) < 0.2:
             return weights*(random.uniform(0,1) - 0.5) * 3 + (random.uniform(0,1) - 0.5 )

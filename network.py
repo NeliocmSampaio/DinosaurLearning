@@ -1,9 +1,15 @@
 import numpy as np
 import sys
 
+'''
+    Artificial Neural Network Definition.
+'''
 class Network:
     def __init__(self, file_n=""):
         if file_n=="":
+            '''
+                Random weights.
+            '''
             self.input_size = 4
             self.hidden_size = 4
             self.output_size = 1
@@ -11,6 +17,9 @@ class Network:
             self.W2 = np.random.randn(self.hidden_size, self.output_size)
             self.fitness = 0
         else:
+            '''
+                Load a network from file.
+            '''
             f = open(file_n, 'r')
 
             line = f.readline().split(" ")
@@ -32,26 +41,14 @@ class Network:
 
             for i in range(self.hidden_size):
                 l = f.readline().split(" ")
-                #print("l: ", l)
                 for ind, j in enumerate(l[:-1]):
                     temp[i].append(float(j))
             self.W2 = np.asarray(temp)
 
-            '''
-            for i in self.W1:
-                for j in i:
-                    print (j, " ", end="")
-                print("")
-            for i in self.W2:
-                for j in i:
-                    print (j, " ", end="")
-                print("")
-            print("")
-            '''
-
-
+    '''
+        ANN output.
+    '''
     def forward(self, inputs):
-        #print(inputs)
         self.z2 = np.dot(inputs, self.W1)
         self.a2 = np.tanh(self.z2)
         self.z3 = np.dot(self.a2, self.W2)

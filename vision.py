@@ -17,10 +17,6 @@ def capture(x, y, w, h):
         sct_img = sct.grab(region)
     img = Image.fromarray(np.array(sct_img))
 
-    #region = (x, y, w, h)
-    #img = pyautogui.screenshot( region=region )
-    #img2 = cv2.cv2.cvtColor( np.array(img), cv2.cv2.COLOR_RGB2GRAY )
-
     return img
 
 def obstacle(distance, length, height, speed, time):
@@ -30,41 +26,28 @@ def is_dino_color(pixel):
     return pixel==dino_color
 
 class Vision:
-    def __init__(self):
-        self.dino_start = (0,0)
-        self.dino_end   = (0,0)
-        self.last_obstacle = obstacle(0, 0, 0, 0, 0)
-        self.__current_fitness = 0
-        self.__change_fitness = False
+    def __init__(self, captureRegion=[100, 330, 850, 155]):
+        self.dino_start =           (0,0)
+        self.dino_end   =           (0,0)
+        self.last_obstacle =        obstacle(0, 0, 0, 0, 0)
+        self.__current_fitness =    0
+        self.__change_fitness =     False
+        self.captureRegion =        captureRegion
 
     def find_game(self):
         #image = capture(100, 330, 850, 155)
-
-        #while True:
-        image = capture(100, 330, 850, 155)
-
-            #print("find")
-            #img2 = cv2.cv2.cvtColor( np.array(image), cv2.cv2.COLOR_RGB2GRAY )
-            #cv2.cv2.imshow('DINO', img2)
-            #time.sleep(5)
-            #if cv2.cv2.waitKey(25) & 0xFF == ord('q'):
-            #    cv2.cv2.destroyAllWindows()
+        region = self.captureRegion
+        image = capture(region[0], region[1], region[2], region[3])
 
         pix = image.getpixel( (0,0) )
-        #print ("pix: ", pix)
         if(pix==(0,0,0,255)):
             image = self.transform(image)
 
-        #img2 = cv2.cv2.cvtColor( np.array(image), cv2.cv2.COLOR_RGB2GRAY )     
-        #cv2.cv2.imshow('DINO', img2)
-
         size = image.size
         pixels = []
-        #print (size)
         for y in range(0, size[1], 10):
             for x in range(0, size[0], 10):
                 color = image.getpixel( (x,y) )
-                #print (color)
                 if is_dino_color(color):
                     pixels.append((x,y))
 
@@ -78,26 +61,10 @@ class Vision:
         size = image.size
         xs = size[1]
         sd = pix.size
-        #print (sd)
-
-        '''
-        for y in range(0, size[1], 10):
-            for x in range(0, size[0], 10):
-                #print (image.getpixel( (x,y) ))
-                if image.getpixel( (x,y) )==(0,0,0,255):
-                    pix[x][y] = (255,255,255,255)
-                else:
-                    pix[x][y] = (84,84,84,255)
-        '''
 
         for x, tmp in enumerate( pix ):
             for y, _ in enumerate(tmp):
-                #print(type(pix[x][y]) )
-                #if pix[x][y].tolist()==[0,0,0,255] or pix[x][y].tolist()==[168, 168, 168, 255] or pix[x][y].tolist()==[8,8,8,255] or pix[x][y].tolist()==[38,38,38,255] or pix[x][y].tolist()==[69,69,69,255] or pix[x][y].tolist()==[70,70,70,255] or pix[x][y].tolist()==[170,170,170,255] or pix[x][y].tolist()==[169,169,169,255]:
-                #    pix[x][y] = (255,255,255,255)
                 if pix[x][y].tolist()==[171, 171, 171, 255]:
-                    
-                    #print ("pix: ", pix[x][y])
                     pix[x][y] = (84,84,84,255)
                 else:
                         pix[x][y] = (255,255,255,255)
@@ -105,6 +72,9 @@ class Vision:
         return Image.fromarray(pix)
 
 
+    '''
+        Find dino's position.
+    '''
     def __find_dino(self, pixels):
         start = pixels[0]
         end = pixels[1]
@@ -117,9 +87,6 @@ class Vision:
         self.dino_end = end
 
     def find_next_obstacle(self):
-        #image = capture(178, 330, 422, 155)
-        #image = capture(184, 330, 390, 135)
-        #image = capture(175, 330, 390, 135)
         image = capture(175, 330, 700, 135)
 
         pix = image.getpixel( (0,0) )
@@ -127,8 +94,6 @@ class Vision:
             image = self.transform(image)
 
         img2 = cv2.cv2.cvtColor( np.array(image), cv2.cv2.COLOR_RGB2GRAY )     
-        #pt = (319,58)
-        #cv2.cv2.rectangle(img2, pt, (pt[0]+50, pt[1]+40), (0,0,0), 1)
         cv2.cv2.imshow('DINO', img2)
         if cv2.cv2.waitKey(25) & 0xFF == ord('q'):
             cv2.cv2.destroyAllWindows()
@@ -151,14 +116,12 @@ class Vision:
 
     def __next_obstacle_dist(self, image):
         s = 0
-        #pt = (319,58)
         pt = (327,58)
         for y in range(pt[1], pt[1]+40 , 5):
             for x in range (pt[0], pt[0]+50, 5):
                 color = image.getpixel((x,y))
                 if is_dino_color(color):
                     s += 1
-        #print("s: ", s)
         if s >= 64:
             raise Exception('game over!')
 
